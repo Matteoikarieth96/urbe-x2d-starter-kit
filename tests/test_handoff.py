@@ -4,8 +4,11 @@ Runs the design skill on its two-colour coaster example (with --variants), fills
 the job the way x2d-print's SKILL.md says (filament numbers by colour, nozzles from
 design.suggested_nozzles), checks it with x2d-print's own job reader, and builds
 the .3mf from the design's real STLs with a fake template and fake Bambu Studio
-profiles (x2d-print's own test helpers). No Bambu Studio needed: slicing is tested
-inside x2d-print with recorded fixtures.
+profiles (x2d-print's own test helpers). No Bambu Studio here or in x2d-print's tests
+(they use a fake slicer). The .3mf files x2d-print built for the holdout slices in
+skills/3d-print-design/references/estimate-calibration.csv were sliced by the real
+Bambu Studio 2.09.01.70 command line on the author's Mac; opening them in the Bambu
+Studio window was not part of that check.
 """
 import io
 import json

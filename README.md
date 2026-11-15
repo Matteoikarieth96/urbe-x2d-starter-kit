@@ -28,10 +28,13 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 > doppio clic) e una guida passo passo in italiano.
 >
 > **Cosa ti serve**: un Mac con [Claude Code](https://claude.com/claude-code); Python
-> dalla 3.11 alla 3.14 da [python.org](https://www.python.org/downloads/) (quello già
-> presente su macOS è troppo vecchio); [Bambu Studio](https://bambulab.com/it/download/studio);
+> 3.13 dalla [pagina macOS di python.org](https://www.python.org/downloads/macos/) (scegli l'ultimo 3.13.x, non il 3.15 del
+> pulsante grande: i pacchetti della skill non sono ancora pronti; quello già presente su
+> macOS è troppo vecchio); [Bambu Studio](https://bambulab.com/it/download/studio);
 > una X2D con PLA caricato. Se la stampante è del Lab, chiedi a chi la gestisce come
-> collegarti: non cambiare le sue impostazioni di rete o di account.
+> collegarti: non cambiare le sue impostazioni di rete o di account. Il template delle
+> impostazioni (passo 5) si salva con le bobine già caricate nella X2D e la stampante
+> visibile in Bambu Studio: di solito lo fai al Lab, la prima volta.
 >
 > **Installazione**: apri il Terminale e incolla, una riga alla volta:
 >
@@ -41,17 +44,23 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 > ./install.sh
 > ```
 >
+> Se al primo `git clone` il Mac propone di installare gli "strumenti per sviluppatori"
+> (Command Line Tools), accetta, aspetta la fine e rilancia le tre righe.
 > Se si ferma con un errore, leggi il messaggio (è anche in italiano), sistema e
 > rilancia `./install.sh`: ripara da solo un'installazione a metà. Quando Claude Code
-> ti chiede il permesso di eseguire un comando, leggi cosa fa: le due skill lanciano
-> solo Python e Bambu Studio sul tuo computer, nella cartella del progetto.
+> ti chiede il permesso di eseguire un comando, leggi cosa fa: è normale che lanci Python
+> e Bambu Studio e che scriva in `~/3d-print-design`. Non approvare comandi che mandano
+> qualcosa alla stampante o scaricano da internet (a parte `./install.sh`).
 
 ## What you need
 
 - A computer with [Claude Code](https://claude.com/claude-code). Tested on macOS only;
   Linux should work, Windows only through WSL (not tested).
-- Python 3.11 to 3.14 (macOS: from [python.org](https://www.python.org/downloads/); the
-  python3 that comes with macOS is 3.9 and is too old for the design skill's packages).
+- Python 3.11 to 3.14; on macOS install the latest 3.13.x from
+  [python.org's macOS page](https://www.python.org/downloads/macos/), not 3.15 (the design skill's packages are not ready
+  for it yet). The python3 that comes with macOS is 3.9 and is too old.
+- On a new Mac, the first `git clone` may offer to install the Command Line Tools:
+  accept, wait, and run the install commands again.
 - [Bambu Studio](https://bambulab.com/en/download/studio), the free slicer for Bambu Lab
   printers, connected to the printer through your Bambu account, LAN or a USB stick (the
   x2d-print guide shows each way). If the printer is shared (a lab's X2D), ask the
@@ -76,10 +85,11 @@ too old, or no internet) and run `./install.sh` again; it repairs a half-finishe
 environment by itself. If a skill was "skipped", you already have another copy of it in
 `~/.claude/skills`: keep that one, or move it away to use the kit's.
 
-**Permission prompts**: Claude Code asks before it runs a command. The two skills run
-Python scripts and Bambu Studio's command line on your computer, inside the project
-folder; nothing is sent to the printer. Read each prompt and say yes only to what you
-understand.
+**Permission prompts**: Claude Code asks before it runs a command. It is normal for the
+two skills to run Python and Bambu Studio's command line and to write in
+`~/3d-print-design`; x2d-print also reads Bambu Studio's settings folder to find your
+templates. Do not approve commands that send anything to the printer or download from
+the internet (apart from `./install.sh`).
 
 ## Your first print, step by step
 
@@ -107,7 +117,9 @@ understand.
    here both colours on the left nozzle (~36 min) beat black on the right one (~41 min).
 4. You look at it in the browser and pick a version.
 5. Claude moves to x2d-print: it tells you which spool goes in the AMS and which on the
-   external holder, helps you save a settings template from your own Bambu Studio, and
+   external holder, helps you save a settings template from your own Bambu Studio (once,
+   with the spools loaded and the printer visible in Bambu Studio, so usually at the
+   printer), and
    builds the `.3mf`. It slices every version on your computer, so you see the **real**
    minutes and grams before you print.
 6. Open the `.3mf` in Bambu Studio with **File > Open project**, follow the guide, stay
@@ -124,10 +136,10 @@ the X2D. Its accuracy is measured, and the data is published in
 | Slices | Time, worst | Time, mean | Grams, worst |
 |---|---|---|---|
 | 34 used to fit the model | 12.6 % | 3.3 % | 9.8 % |
-| 18 new parts never used to fit it (holdout) | 32 % | 8 % | 16 % |
+| 18 more slices of about 15 parts never used to fit it | 32 % | 8 % | 16 % |
 
 So the range it shows is wide on purpose: -15 % to +50 % on time and -15 % to +10 % on
-grams, and every slice above falls inside it. That holds only in the measured field
+grams, set after that check so that every slice above falls inside it. That holds only in the measured field
 (X2D, PLA, 0.4 mm nozzle, 0.2 mm layers, no supports, infill up to 40 %). Anything
 else (another material, nozzle or layer height, supports, another printer) gets a wider
 range marked "rough: outside the measured range, trust the slicer".

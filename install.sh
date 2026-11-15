@@ -36,13 +36,13 @@ PY=""
 if [ -n "${PYTHON:-}" ]; then
   if ok_python "$PYTHON"; then PY="$PYTHON"; fi
 else
-  for cand in python3.14 python3.13 python3.12 python3.11 python3; do
+  for cand in python3.13 python3.12 python3.14 python3.11 python3; do
     if command -v "$cand" >/dev/null 2>&1 && ok_python "$cand"; then PY="$cand"; break; fi
   done
 fi
 if [ -z "$PY" ]; then
-  say "Python 3.11 to 3.14 is needed (the python3 built into macOS is too old). Install Python 3.13 from https://www.python.org/downloads/ , close and reopen the terminal, then run ./install.sh again." \
-      "Serve Python dalla 3.11 alla 3.14 (quello già presente su macOS è troppo vecchio). Installa Python 3.13 da https://www.python.org/downloads/ , chiudi e riapri il terminale, poi rilancia ./install.sh." >&2
+  say "Python 3.11 to 3.14 is needed (the python3 built into macOS is too old). Install Python 3.13 from https://www.python.org/downloads/macos/ (pick the latest 3.13.x installer, not 3.15: its packages are not ready yet), close and reopen the terminal, then run ./install.sh again." \
+      "Serve Python dalla 3.11 alla 3.14 (quello già presente su macOS è troppo vecchio). Installa Python 3.13 da https://www.python.org/downloads/macos/ (scegli l'ultimo installer 3.13.x, non la 3.15: i suoi pacchetti non sono ancora pronti), chiudi e riapri il terminale, poi rilancia ./install.sh." >&2
   exit 1
 fi
 
@@ -59,8 +59,8 @@ else
   "$PY" -m venv "$VENV"
   if ! "$VENV/bin/python" -m pip install --quiet --disable-pip-version-check --only-binary=:all: -r "$REQ" || ! ready; then
     rm -rf "$VENV"
-    say "the Python packages did not install. Check the internet connection and run ./install.sh again; if it fails again, copy the error into Claude Code and ask for help." \
-        "i pacchetti Python non si sono installati. Controlla la connessione e rilancia ./install.sh; se fallisce di nuovo, incolla l'errore in Claude Code e chiedi aiuto." >&2
+    say "the Python packages did not install with $PY. Check the internet connection and run ./install.sh again (or choose another Python: PYTHON=python3.13 ./install.sh); if it fails again, copy the error into Claude Code and ask for help." \
+        "i pacchetti Python non si sono installati con $PY. Controlla la connessione e rilancia ./install.sh (oppure scegli un altro Python: PYTHON=python3.13 ./install.sh); se fallisce di nuovo, incolla l'errore in Claude Code e chiedi aiuto." >&2
     exit 1
   fi
 fi
