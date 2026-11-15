@@ -4,6 +4,7 @@
 The skills are developed in their own repositories; this kit only carries copies.
     python3 scripts/sync_skills.py            # copy the latest main of both, update skills/SOURCES.json
     python3 scripts/sync_skills.py --check    # skills/ must equal the commits in SOURCES.json
+    python3 scripts/sync_skills.py --pinned   # copy the commits already in SOURCES.json (must be on main)
 Only files tracked by git upstream are copied, minus the upstream .github folder.
 --check also refuses: a recorded commit that is not on the upstream main branch, a
 different executable bit, and files committed under skills/ that the upstream repo does
@@ -119,6 +120,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="only check skills/ against SOURCES.json")
     ap.add_argument("--ref", default="main", help="branch or commit to copy (default main)")
+    ap.add_argument("--pinned", action="store_true",
+                    help="copy the commits recorded in SOURCES.json instead of --ref (each must be on main)")
     a = ap.parse_args(argv)
     sources = json.loads(SOURCES.read_text()) if SOURCES.is_file() else {}
     problems, changed = [], []
@@ -137,16 +140,30 @@ def main(argv=None) -> int:
                     continue
                 problems += [f"{name}: {d}" for d in differences(work, dest)]
                 committed = committed_here(name)
-                if committed is not None:
+                if committed is None:
+                    print(f"note: not a git checkout, so files committed under skills/{name} were not checked")
+                else:
                     want = set(tracked(work))
                     problems += [f"{name}: committed here but not upstream: {f}" for f in sorted(committed - want)]
                     problems += [f"{name}: not committed here (check .gitignore): {f}"
                                  for f in sorted(want - committed)]
                 continue
-            commit = fetch(url, a.ref, work)
+            old = sources.get(name, {}).get("commit", "none")
+            if a.pinned:
+                if old == "none":
+                    raise SystemExit(f"{name}: no commit recorded in skills/SOURCES.json")
+                error = fetch_on_main(url, old, work)
+                if error:
+                    raise SystemExit(f"{name}: {error}")
+                commit = old
+            else:
+                commit = fetch(url, a.ref, work)
             if differences(work, dest):
                 copy(work, dest)
-                changed.append(f"{name} {sources.get(name, {}).get('commit', 'none')[:7]} -> {commit[:7]}")
+                if commit == old:
+                    changed.append(f"{name} {commit[:7]} restored (files under skills/{name} had been edited here)")
+                else:
+                    changed.append(f"{name} {old[:7]} -> {commit[:7]}")
             sources[name] = {"repo": url.removesuffix(".git"), "commit": commit}
     if a.check:
         if problems:

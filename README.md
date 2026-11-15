@@ -156,8 +156,11 @@ The skills are developed in their own repositories, and this kit carries copies:
   the same check locally.
 - After merging a sync, run `git pull` (and `./install.sh` if `requirements.txt`
   changed) in your clone: your installed skills are links into it.
-- If the tests fail, the action opens an issue "Sync skills failed" instead of a pull
-  request.
+- If the copy or the tests fail, the action opens an issue "Sync skills failed" instead
+  of a pull request; the next green run closes it.
+- CI on the sync pull request waits for your approval ("Approve workflows to run" on
+  the pull request): the sync run tested on Ubuntu only, CI adds macOS and the other
+  Python versions.
 - GitHub switches scheduled actions off after 60 days without activity in a public repo.
   After changing a skill, run the sync by hand: `gh workflow enable sync.yml` (if it was
   switched off), then `gh workflow run sync.yml`.
