@@ -1,0 +1,99 @@
+{
+  "name": "coaster",
+  "template": "",
+  "objects": [
+    {
+      "name": "coaster",
+      "parts": [
+        {
+          "stl": "coaster-base.stl",
+          "filament": null,
+          "colour": "black",
+          "colour_hex": "#161616"
+        },
+        {
+          "stl": "coaster-star.stl",
+          "filament": null,
+          "colour": "yellow",
+          "colour_hex": "#fff144"
+        }
+      ]
+    }
+  ],
+  "nozzles": {},
+  "settings": {
+    "layer_height": "0.2",
+    "wall_loops": "3",
+    "sparse_infill_density": "15%",
+    "top_shell_layers": "5",
+    "bottom_shell_layers": "3",
+    "enable_support": "0"
+  },
+  "output": "coaster.3mf",
+  "design": {
+    "from": "3d-print-design",
+    "format": 2,
+    "printer": "Bambu Lab X2D",
+    "material": "PLA",
+    "layer_mm": 0.2,
+    "nozzle_mm": 0.4,
+    "supports": false,
+    "assembly": true,
+    "variant": "standard",
+    "quantity": 1,
+    "parts": [
+      {
+        "stl": "coaster-base.stl",
+        "colour": "black",
+        "colour_hex": "#161616",
+        "z_mm": [
+          0.0,
+          4.0
+        ],
+        "layers": 20,
+        "volume_mm3": 24707.3
+      },
+      {
+        "stl": "coaster-star.stl",
+        "colour": "yellow",
+        "colour_hex": "#fff144",
+        "z_mm": [
+          3.4,
+          4.0
+        ],
+        "layers": 3,
+        "volume_mm3": 661.3
+      }
+    ],
+    "colour_layers": {
+      "layers": 20,
+      "mixed_layers": 3,
+      "max_colours_per_layer": 2
+    },
+    "suggested_nozzles": {
+      "black": "right",
+      "yellow": "left"
+    },
+    "notes": [
+      "2 colours: checked against the 235.5 x 256 x 256 mm that both nozzles reach; leave room for the prime tower too",
+      "plate: Textured PEI Plate by default (the bottom face takes its texture)"
+    ],
+    "todo": [
+      "template: the .3mf saved from Bambu Studio (x2d-print), after loading the colours below",
+      "filament: for each part, the number of the template filament with that colour",
+      "nozzles: filament number -> left/right, from design.suggested_nozzles (keyed by colour)",
+      "check that the template's filaments are PLA"
+    ],
+    "first_print": true,
+    "estimate": {
+      "grams": 18.7,
+      "metres": 6.27,
+      "minutes": 39,
+      "minutes_range": [
+        30,
+        50
+      ],
+      "purge_g": 1.1
+    }
+  }
+}
