@@ -33,7 +33,7 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 > macOS è troppo vecchio); [Bambu Studio](https://bambulab.com/it/download/studio);
 > una X2D con PLA caricato. Se la stampante è del Lab, chiedi a chi la gestisce come
 > collegarti: non cambiare le sue impostazioni di rete o di account. Il template delle
-> impostazioni (passo 5) si salva con le bobine già caricate nella X2D e la stampante
+> impostazioni (quando Claude passa a x2d-print) si salva con le bobine già caricate nella X2D e la stampante
 > visibile in Bambu Studio: di solito lo fai al Lab, la prima volta.
 >
 > **Installazione**: apri il Terminale e incolla, una riga alla volta:
@@ -50,7 +50,8 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 > rilancia `./install.sh`: ripara da solo un'installazione a metà. Quando Claude Code
 > ti chiede il permesso di eseguire un comando, leggi cosa fa: è normale che lanci Python
 > e Bambu Studio e che scriva in `~/3d-print-design`. Non approvare comandi che mandano
-> qualcosa alla stampante o scaricano da internet (a parte `./install.sh`).
+> qualcosa alla stampante o scaricano da internet (a parte `./install.sh` e, se
+> l'ambiente Python manca, il `pip install -r requirements.txt` della skill di design).
 
 ## What you need
 
@@ -89,7 +90,8 @@ environment by itself. If a skill was "skipped", you already have another copy o
 two skills to run Python and Bambu Studio's command line and to write in
 `~/3d-print-design`; x2d-print also reads Bambu Studio's settings folder to find your
 templates. Do not approve commands that send anything to the printer or download from
-the internet (apart from `./install.sh`).
+the internet (apart from `./install.sh` and, when the Python environment is missing,
+the design skill's `pip install -r requirements.txt`).
 
 ## Your first print, step by step
 
@@ -136,13 +138,14 @@ the X2D. Its accuracy is measured, and the data is published in
 | Slices | Time, worst | Time, mean | Grams, worst |
 |---|---|---|---|
 | 34 used to fit the model | 12.6 % | 3.3 % | 9.8 % |
-| 18 more slices of about 15 parts never used to fit it | 32 % | 8 % | 16 % |
+| 18 more slices of about 15 parts (16 strictly out of sample) | 32 % | 8 % | 16 % |
 
 So the range it shows is wide on purpose: -15 % to +50 % on time and -15 % to +10 % on
 grams, set after that check so that every slice above falls inside it. That holds only in the measured field
-(X2D, PLA, 0.4 mm nozzle, 0.2 mm layers, no supports, infill up to 40 %). Anything
-else (another material, nozzle or layer height, supports, another printer) gets a wider
-range marked "rough: outside the measured range, trust the slicer".
+(X2D, PLA, 0.4 mm nozzle, 0.2 mm layers, no supports, infill up to 40 %, 2 to 4 walls,
+5 top and 3 bottom layers, one or two colours). Anything else gets a wider range marked
+"rough: outside the measured range, trust the slicer". A few unmeasured cases are not
+flagged (a colour pair that purges more, brims, ironing...): there, trust the slicer.
 
 A colour change on the same nozzle costs about 2 minutes and 0.7 g each. On the X2D a
 second colour on the other nozzle saves those changes but costs about 10 minutes once,
