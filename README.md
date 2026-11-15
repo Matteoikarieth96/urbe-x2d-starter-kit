@@ -89,19 +89,22 @@ understand.
    Every term is explained the first time it comes up.
 3. Claude builds the part, checks it (closed solid, flat on the plate, nothing hanging
    in the air, fits the printer) and shows a table like this one, for the two-colour
-   coaster example (real Bambu Studio slice in the last column):
+   coaster example (estimates before slicing; the real Bambu Studio slice of the
+   standard version took 38 min and 19.7 g):
 
-   | Version | What changes | Filament | Print time | Real slice |
+   | Version | What changes | Filament | Print time | vs standard |
    |---|---|---|---|---|
-   | light | 2 walls, 10% infill | ~17 g PLA | 30 to 50 min | 39 min, 16.5 g |
-   | standard | 3 walls, 15% infill | ~19 g PLA | 30 to 50 min | 41 min, 17.6 g |
-   | strong | 4 walls, 40% infill | ~23 g PLA | 30 to 55 min | 49 min, 22.1 g |
+   | standard | 3 walls, 15% infill | ~19.8 g PLA | ~36 min (30 to 55 min) | |
+   | light | 2 walls, 10% infill | ~18.5 g PLA | ~34 min (25 to 55 min) | -2 min, -1.3 g |
+   | strong | 4 walls, 40% infill | ~24.2 g PLA | ~41 min (30 min to 1 h 05) | +5 min, +4.4 g |
 
-   About 8 of those minutes are the printer getting ready (heating, levelling), so a
-   small part never takes less than that.
+   About 6 or 7 of those minutes are the printer getting ready (heating, levelling), so
+   a small part never takes less than that. On a small part like this one the versions
+   differ little; on a bigger or solid part the light version saves much more.
 
    It also suggests bigger savings in the design itself, when there are any (a
-   smaller part, colours only on the top layers, the main colour on the other nozzle).
+   smaller part, colours only on the top layers), and which nozzle plan is faster:
+   here both colours on the left nozzle (~36 min) beat black on the right one (~41 min).
 4. You look at it in the browser and pick a version.
 5. Claude moves to x2d-print: it tells you which spool goes in the AMS and which on the
    external holder, helps you save a settings template from your own Bambu Studio, and
@@ -113,10 +116,27 @@ understand.
 ## How the estimates are made
 
 Before slicing, the design skill estimates filament from the part's shape and the
-version's walls and infill, and time from a model fitted on 31 real Bambu Studio slices
-on the X2D (grams within about 10 %, time within about 20 %). A colour change on the
-same nozzle costs about 2 minutes and 0.75 g each; on the X2D a second colour on the
-other nozzle costs almost nothing. x2d-print then slices for the exact figures.
+version's walls and infill, and time from a model fitted on real Bambu Studio slices on
+the X2D. Its accuracy is measured, and the data is published in
+[estimate-calibration.csv](skills/3d-print-design/references/estimate-calibration.csv)
+([how it was made](skills/3d-print-design/references/estimate-calibration.md)):
+
+| Slices | Time, worst | Time, mean | Grams, worst |
+|---|---|---|---|
+| 34 used to fit the model | 12.6 % | 3.3 % | 9.8 % |
+| 18 new parts never used to fit it (holdout) | 32 % | 8 % | 16 % |
+
+So the range it shows is wide on purpose: -15 % to +50 % on time and -15 % to +10 % on
+grams, and every slice above falls inside it. That holds only in the measured field
+(X2D, PLA, 0.4 mm nozzle, 0.2 mm layers, no supports, infill up to 40 %). Anything
+else (another material, nozzle or layer height, supports, another printer) gets a wider
+range marked "rough: outside the measured range, trust the slicer".
+
+A colour change on the same nozzle costs about 2 minutes and 0.7 g each. On the X2D a
+second colour on the other nozzle saves those changes but costs about 10 minutes once,
+to heat and prime the second nozzle, so with few colour layers one nozzle is faster: the
+design skill compares both plans and suggests the quicker one. x2d-print then slices
+on your computer for closer figures.
 
 ## How this repository stays up to date
 

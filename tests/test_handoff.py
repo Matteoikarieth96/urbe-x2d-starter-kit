@@ -60,14 +60,19 @@ class HandoffTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    def fill(self):
+    def fill(self, option=None):
+        """Fill the job as x2d-print's SKILL.md says; `option` picks one of design.nozzle_options."""
         job = json.loads(self.job_path.read_text())
         job["template"] = "template.3mf"
         for obj in job["objects"]:
             for part in obj["parts"]:
                 part["filament"] = TEMPLATE_COLOURS[part["colour"]]
-        job["nozzles"] = {str(TEMPLATE_COLOURS[c]): n for c, n in job["design"]["suggested_nozzles"].items()}
-        path = self.job_path.with_name("filled.json")
+        nozzles = job["design"]["suggested_nozzles"]
+        if option:
+            nozzles = next(o["nozzles"] for o in job["design"]["nozzle_options"] if o["option"] == option)
+            job["design"]["suggested_nozzles"] = nozzles
+        job["nozzles"] = {str(TEMPLATE_COLOURS[c]): n for c, n in nozzles.items()}
+        path = self.job_path.with_name(f"filled-{option or 'suggested'}.json")
         path.write_text(json.dumps(job))
         return path
 
@@ -75,7 +80,11 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(self.res.returncode, 0, self.res.stdout + self.res.stderr)
         job = json.loads(self.job_path.read_text())
         self.assertEqual(job["design"]["format"], 2)
-        self.assertEqual(job["design"]["suggested_nozzles"], {"black": "right", "yellow": "left"})
+        # black and yellow share only a few layers: one nozzle is faster than heating a second
+        self.assertEqual(job["design"]["suggested_nozzles"], {"black": "left", "yellow": "left"})
+        options = {o["option"]: o for o in job["design"]["nozzle_options"]}
+        self.assertEqual(options["dominant_right"]["nozzles"], {"black": "right", "yellow": "left"})
+        self.assertLess(options["all_left"]["minutes"], options["dominant_right"]["minutes"])
         self.assertEqual({v["name"] for v in job["variants"]}, {"light", "strong"})
         self.assertIn("| light |", self.res.stdout)
 
@@ -86,9 +95,11 @@ class HandoffTests(unittest.TestCase):
     def test_filled_job_reads_in_x2d_print(self):
         job = bp.load_job(self.fill())
         self.assertEqual([p["filament"] for p in job["objects"][0]["parts"]], [5, 1])
-        # black (filament 5) goes right, everything else stays left
-        self.assertEqual(bp.nozzle_map(job, SETTINGS), ["1", "1", "1", "1", "2"])
+        self.assertEqual(bp.nozzle_map(job, SETTINGS), ["1", "1", "1", "1", "1"])
         self.assertEqual(job["settings"]["wall_loops"], "3")
+        # the other plan: black (filament 5) on the right nozzle, everything else left
+        other = bp.load_job(self.fill("dominant_right"))
+        self.assertEqual(bp.nozzle_map(other, SETTINGS), ["1", "1", "1", "1", "2"])
 
     def test_variants_carry_their_settings(self):
         job = bp.load_job(self.fill())
@@ -163,9 +174,16 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(s["filament_map"], ["1", "1", "1", "1", "2"])
 
     def test_design_and_template_agree(self):
-        job = bp.load_job(self.fill())
-        warnings = bp.design_warnings(job, dict(SETTINGS, **job["settings"]), bp.nozzle_map(job, SETTINGS))
-        self.assertEqual(warnings, [], warnings)
+        for option in (None, "dominant_right"):
+            job = bp.load_job(self.fill(option))
+            warnings = bp.design_warnings(job, dict(SETTINGS, **job["settings"]), bp.nozzle_map(job, SETTINGS))
+            self.assertEqual(warnings, [], (option, warnings))
+
+    def test_other_nozzle_plan_builds(self):
+        job = bp.load_job(self.fill("dominant_right"))
+        z, report = self.build(job)
+        s = json.loads(z.read(bp.SETTINGS_ENTRY))
+        self.assertEqual(s["filament_map"], ["1", "1", "1", "1", "2"])
 
 
 if __name__ == "__main__":
