@@ -18,7 +18,10 @@ and [skills/x2d-print/SECURITY.md](skills/x2d-print/SECURITY.md).
   with the commits in `skills/SOURCES.json`; refuses a commit that is not on the
   upstream `main`; and refuses files committed under `skills/` that the upstream repo
   does not have (a `.venv` or `__pycache__` folder slipped in by hand, for example).
-- **ci.yml** runs with read-only permissions and no stored credentials.
+  `--not-older-than REF` also refuses a pin older than the one on REF, so a pull
+  request cannot roll a skill back to an earlier commit.
+- **ci.yml** runs with read-only permissions and no stored credentials; on a pull
+  request it checks that no pin moves backwards against the base branch.
 - **sync.yml** runs in two jobs so that the skills' own code (their tests and the
   packages they install) never runs next to a write token. The `test` job has a
   read-only token: it copies the skills, checks them and runs every test. The `publish`

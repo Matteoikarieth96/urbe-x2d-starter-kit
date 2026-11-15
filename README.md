@@ -171,8 +171,11 @@ The skills are developed in their own repositories, and this kit carries copies:
   the same check locally.
 - After merging a sync, run `git pull` (and `./install.sh` if `requirements.txt`
   changed) in your clone: your installed skills are links into it.
-- If the copy or the tests fail, the action opens an issue "Sync skills failed" instead
-  of a pull request; the next green run closes it.
+- If the copy or the tests fail, the action opens an issue "Sync skills failed"; the
+  next fully green run closes it. When the two new versions fail only together, it
+  tries each skill alone and still opens the pull request with the one that passes.
+- The pull request lists the files it changes under `skills/`; a pin in
+  `skills/SOURCES.json` may only move forward (CI refuses an older commit).
 - CI on the sync pull request waits for your approval ("Approve workflows to run" on
   the pull request): the sync run tested on Ubuntu only, CI adds macOS and the other
   Python versions.
