@@ -1,0 +1,56 @@
+name: Sync skills
+
+# Copies the latest main of both skill repos into skills/, runs every test and
+# opens a pull request when something changed. Pull requests opened with the
+# workflow token do not start other workflows, so the tests run here, before
+# the pull request exists. Run it by hand after a skill update (Actions tab,
+# "Sync skills", "Run workflow") or wait for the nightly run.
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: "3.12"
+      - name: Copy the latest skills
+        id: sync
+        run: |
+          python3 scripts/sync_skills.py | tee sync.log
+          if git diff --quiet -- skills; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Test the new copies together
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          python3 -m pip install -r skills/3d-print-design/requirements.txt
+          (cd skills/3d-print-design && python3 -m unittest discover -s tests -q)
+          (cd skills/x2d-print && python3 -m unittest discover -s tests -q)
+          python3 -m unittest discover -s tests -v
+      - name: Open a pull request
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="sync/skills-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add skills
+          git commit -q -m "Sync skills: $(cat sync.log)"
+          git push -q origin "$branch"
+          gh pr create --base main --head "$branch" --title "Sync skills" \
+            --body "$(printf 'Copied from the skill repos by the Sync skills action.\n\n%s\n\nAll tests passed in this run: both skills and the hand-off test (tests/). Review the diff and merge.' "$(cat sync.log)")"

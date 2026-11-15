@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: "3.12"
+      - name: skills/ equals the upstream skill repos (edit skills there, not here)
+        run: python3 scripts/sync_skills.py --check
+      - name: Install the design skill's geometry libraries
+        run: python3 -m pip install -r skills/3d-print-design/requirements.txt
+      - name: 3d-print-design tests
+        working-directory: skills/3d-print-design
+        run: python3 -m unittest discover -s tests -q
+      - name: x2d-print tests
+        working-directory: skills/x2d-print
+        run: python3 -m unittest discover -s tests -q
+      - name: Hand-off from design to x2d-print
+        run: python3 -m unittest discover -s tests -v
