@@ -5,6 +5,9 @@ The skills are developed in their own repositories; this kit only carries copies
     python3 scripts/sync_skills.py            # copy the latest main of both, update skills/SOURCES.json
     python3 scripts/sync_skills.py --check    # skills/ must equal the commits in SOURCES.json
 Only files tracked by git upstream are copied, minus the upstream .github folder.
+--check also refuses: a recorded commit that is not on the upstream main branch, a
+different executable bit, and files committed under skills/ that the upstream repo does
+not have (including .venv, __pycache__ and .DS_Store, which a plain copy ignores).
 Standard library only; needs git on PATH.
 """
 from __future__ import annotations
@@ -12,6 +15,7 @@ from __future__ import annotations
 import argparse
 import filecmp
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -43,6 +47,37 @@ def fetch(url: str, ref: str, into: Path) -> str:
     return git("rev-parse", "HEAD", cwd=into)
 
 
+def fetch_on_main(url: str, commit: str, into: Path) -> str:
+    """Fetch the whole upstream main and check out `commit`, which must be on it.
+
+    Returns an error message, or "" when the commit is on main."""
+    into.mkdir(parents=True)
+    git("init", "-q", cwd=into)
+    git("fetch", "-q", url, "main", cwd=into)
+    ok = subprocess.run(["git", "merge-base", "--is-ancestor", commit, "FETCH_HEAD"], cwd=into,
+                        capture_output=True).returncode == 0
+    if not ok:
+        return f"commit {commit[:12]} is not on the upstream main branch"
+    git("-c", "advice.detachedHead=false", "checkout", "-q", commit, cwd=into)
+    return ""
+
+
+def committed_here(name: str) -> "set | None":
+    """Files of skills/<name> committed in this kit's own git repo (None outside a checkout)."""
+    if not (ROOT / ".git").exists():
+        return None
+    out = subprocess.run(["git", "ls-files", "-z", "--", f"skills/{name}"], cwd=ROOT,
+                         capture_output=True, text=True)
+    if out.returncode != 0:
+        return None
+    prefix = f"skills/{name}/"
+    return {f[len(prefix):] for f in out.stdout.split("\0") if f.startswith(prefix)}
+
+
+def executable(path: Path) -> bool:
+    return bool(path.stat().st_mode & 0o111)
+
+
 def tracked(repo: Path) -> list:
     files = git("ls-files", "-z", cwd=repo).split("\0")
     return sorted(f for f in files if f and not f.startswith(SKIP_PREFIXES))
@@ -56,7 +91,8 @@ def _local_files(dest: Path) -> set:
 
 
 def copy(repo: Path, dest: Path) -> None:
-    for rel in _local_files(dest) - set(tracked(repo)):
+    for rel in sorted(_local_files(dest) - set(tracked(repo))):
+        print(f"removing {dest.name}/{rel} (no longer in the upstream repo)")
         (dest / rel).unlink()
     for rel in tracked(repo):
         src = repo / rel
@@ -71,7 +107,11 @@ def differences(repo: Path, dest: Path) -> list:
     want = set(tracked(repo))
     have = _local_files(dest)
     out = [f"missing: {f}" for f in sorted(want - have)] + [f"extra: {f}" for f in sorted(have - want)]
-    out += [f"changed: {f}" for f in sorted(want & have) if not filecmp.cmp(repo / f, dest / f, shallow=False)]
+    for f in sorted(want & have):
+        if not filecmp.cmp(repo / f, dest / f, shallow=False):
+            out.append(f"changed: {f}")
+        elif executable(repo / f) != executable(dest / f):
+            out.append(f"executable bit differs: {f}")
     return out
 
 
@@ -91,8 +131,17 @@ def main(argv=None) -> int:
                 if not commit:
                     problems.append(f"{name}: no commit recorded in skills/SOURCES.json")
                     continue
-                fetch(url, commit, work)
+                error = fetch_on_main(url, commit, work)
+                if error:
+                    problems.append(f"{name}: {error}")
+                    continue
                 problems += [f"{name}: {d}" for d in differences(work, dest)]
+                committed = committed_here(name)
+                if committed is not None:
+                    want = set(tracked(work))
+                    problems += [f"{name}: committed here but not upstream: {f}" for f in sorted(committed - want)]
+                    problems += [f"{name}: not committed here (check .gitignore): {f}"
+                                 for f in sorted(want - committed)]
                 continue
             commit = fetch(url, a.ref, work)
             if differences(work, dest):

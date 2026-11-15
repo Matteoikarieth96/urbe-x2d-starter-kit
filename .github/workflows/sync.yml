@@ -1,10 +1,15 @@
 name: Sync skills
 
 # Copies the latest main of both skill repos into skills/, runs every test and
-# opens a pull request when something changed. Pull requests opened with the
-# workflow token do not start other workflows, so the tests run here, before
-# the pull request exists. Run it by hand after a skill update (Actions tab,
-# "Sync skills", "Run workflow") or wait for the nightly run.
+# opens (or updates) one pull request on the branch sync/skills when something
+# changed. The tests run here, before the pull request exists, because CI on a
+# pull request pushed with the workflow token does not start by itself (close and
+# reopen the pull request to start it). If the tests fail, the run
+# opens an issue instead, so a broken hand-off is visible in the repo.
+#
+# Run it by hand after a skill update (Actions tab, "Sync skills", "Run workflow")
+# or wait for the nightly run. GitHub turns scheduled workflows off after 60 days
+# without activity in a public repo: `gh workflow enable sync.yml` turns it back on.
 
 on:
   schedule:
@@ -12,8 +17,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: sync-skills
@@ -23,8 +27,14 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: "3.12"
@@ -32,25 +42,50 @@ jobs:
         id: sync
         run: |
           python3 scripts/sync_skills.py | tee sync.log
-          if git diff --quiet -- skills; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
-      - name: Test the new copies together
+          if git diff --quiet -- skills && [ -z "$(git ls-files --others --exclude-standard -- skills)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Commit the copy and check it from a clean tree
         if: steps.sync.outputs.changed == 'true'
         run: |
-          python3 -m pip install -r skills/3d-print-design/requirements.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c sync/skills
+          git add skills
+          git commit -q -m "Sync skills: $(cat sync.log)"
+          git clean -xdfq -- skills
+          python3 scripts/sync_skills.py --check
+      - name: Test the new copies together
+        id: tests
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          python3 -m pip install --only-binary=:all: -r skills/3d-print-design/requirements.txt
           (cd skills/3d-print-design && python3 -m unittest discover -s tests -q)
           (cd skills/x2d-print && python3 -m unittest discover -s tests -q)
           python3 -m unittest discover -s tests -v
-      - name: Open a pull request
+      - name: Push the branch and open or update the pull request
         if: steps.sync.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
-          branch="sync/skills-$(date -u +%Y%m%d-%H%M)"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c "$branch"
-          git add skills
-          git commit -q -m "Sync skills: $(cat sync.log)"
-          git push -q origin "$branch"
-          gh pr create --base main --head "$branch" --title "Sync skills" \
-            --body "$(printf 'Copied from the skill repos by the Sync skills action.\n\n%s\n\nAll tests passed in this run: both skills and the hand-off test (tests/). Review the diff and merge.' "$(cat sync.log)")"
+          # sync/skills belongs to this workflow: each run replaces it with a fresh copy of main
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" HEAD:refs/heads/sync/skills
+          body="$(printf 'Copied from the skill repos by the Sync skills action.\n\n%s\n\nAll tests passed in this run: both skills and the hand-off test (tests/). Review the diff and merge.' "$(cat sync.log)")"
+          if [ -n "$(gh pr list --head sync/skills --state open --json number --jq '.[].number')" ]; then
+            gh pr edit sync/skills --body "$body"
+          else
+            gh pr create --base main --head sync/skills --title "Sync skills" --body "$body"
+          fi
+      - name: Open an issue when the sync or its tests fail
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$(gh issue list --state open --search 'Sync skills failed in:title' --json number --jq '.[].number')" ]; then
+            gh issue create --title "Sync skills failed" \
+              --body "The nightly copy of the skills or its tests failed: $RUN. Fix the skill in its own repository, then run Sync skills again."
+          fi

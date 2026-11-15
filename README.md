@@ -17,19 +17,45 @@ You open the `.3mf` in Bambu Studio (**File > Open project**, never by
 double-clicking it), check the preview and press Print. Nothing in this kit talks
 to the printer: sending the print stays your step.
 
+Made for the maker lab of [Urbe](https://github.com/urbe-hub), a community hub in
+Rome with a Bambu Lab X2D, and for anyone else with the same printer.
+
 > **In italiano, in breve.** Questo kit porta da un'idea a una stampa sulla Bambu Lab X2D,
 > anche per chi non ha mai stampato. Installi il kit, apri Claude Code e scrivi cosa vuoi
-> stampare ("disegnami un portachiavi con il logo di Urbe"). Claude ti fa qualche domanda,
+> stampare ("disegnami un gancio per lo zaino"). Claude ti fa qualche domanda,
 > disegna il pezzo, ti mostra 2 o 3 versioni con grammi di filamento e tempo di stampa,
-> poi prepara il file `.3mf` da aprire in Bambu Studio (File > Apri progetto) e una guida
-> passo passo in italiano.
+> poi prepara il file `.3mf` da aprire in Bambu Studio (File > Apri progetto, mai con
+> doppio clic) e una guida passo passo in italiano.
+>
+> **Cosa ti serve**: un Mac con [Claude Code](https://claude.com/claude-code); Python
+> dalla 3.11 alla 3.14 da [python.org](https://www.python.org/downloads/) (quello già
+> presente su macOS è troppo vecchio); [Bambu Studio](https://bambulab.com/it/download/studio);
+> una X2D con PLA caricato. Se la stampante è del Lab, chiedi a chi la gestisce come
+> collegarti: non cambiare le sue impostazioni di rete o di account.
+>
+> **Installazione**: apri il Terminale e incolla, una riga alla volta:
+>
+> ```
+> git clone https://github.com/Matteoikarieth96/urbe-x2d-starter-kit.git
+> cd urbe-x2d-starter-kit
+> ./install.sh
+> ```
+>
+> Se si ferma con un errore, leggi il messaggio (è anche in italiano), sistema e
+> rilancia `./install.sh`: ripara da solo un'installazione a metà. Quando Claude Code
+> ti chiede il permesso di eseguire un comando, leggi cosa fa: le due skill lanciano
+> solo Python e Bambu Studio sul tuo computer, nella cartella del progetto.
 
 ## What you need
 
-- A computer with [Claude Code](https://claude.com/claude-code). Tested on macOS.
-- Python 3.9 or newer (macOS: from [python.org](https://www.python.org/downloads/)).
+- A computer with [Claude Code](https://claude.com/claude-code). Tested on macOS only;
+  Linux should work, Windows only through WSL (not tested).
+- Python 3.11 to 3.14 (macOS: from [python.org](https://www.python.org/downloads/); the
+  python3 that comes with macOS is 3.9 and is too old for the design skill's packages).
 - [Bambu Studio](https://bambulab.com/en/download/studio), the free slicer for Bambu Lab
-  printers, signed in and connected to the printer (the x2d-print guide shows how).
+  printers, connected to the printer through your Bambu account, LAN or a USB stick (the
+  x2d-print guide shows each way). If the printer is shared (a lab's X2D), ask the
+  person who manages it how to connect: do not change its network or account settings.
 - A Bambu Lab X2D with PLA loaded. The design skill also works for other printers: you
   get STL files and a print sheet for your own slicer, and the estimates are rougher.
 
@@ -43,7 +69,17 @@ cd urbe-x2d-starter-kit
 
 `install.sh` links both skills into `~/.claude/skills` and creates the Python
 environment the design skill needs. It never replaces a skill you already have. To
-update later: `git pull` in this folder.
+update later: `git pull` in this folder, then `./install.sh` again.
+
+**If the install stops**: read the message, fix what it says (usually Python missing or
+too old, or no internet) and run `./install.sh` again; it repairs a half-finished
+environment by itself. If a skill was "skipped", you already have another copy of it in
+`~/.claude/skills`: keep that one, or move it away to use the kit's.
+
+**Permission prompts**: Claude Code asks before it runs a command. The two skills run
+Python scripts and Bambu Studio's command line on your computer, inside the project
+folder; nothing is sent to the printer. Read each prompt and say yes only to what you
+understand.
 
 ## Your first print, step by step
 
@@ -94,10 +130,17 @@ The skills are developed in their own repositories, and this kit carries copies:
 - `skills/SOURCES.json` records the exact commit of each copy.
 - The **Sync skills** action (nightly, or by hand from the Actions tab) copies the
   latest version of both, runs both test suites and the hand-off test in `tests/`, and
-  opens a pull request.
+  opens a pull request on the branch `sync/skills` (or updates the one already open).
 - CI refuses any change to `skills/` that does not match the source repositories: fix a
   skill in its own repository, then sync. `python3 scripts/sync_skills.py --check` runs
   the same check locally.
+- After merging a sync, run `git pull` (and `./install.sh` if `requirements.txt`
+  changed) in your clone: your installed skills are links into it.
+- If the tests fail, the action opens an issue "Sync skills failed" instead of a pull
+  request.
+- GitHub switches scheduled actions off after 60 days without activity in a public repo.
+  After changing a skill, run the sync by hand: `gh workflow enable sync.yml` (if it was
+  switched off), then `gh workflow run sync.yml`.
 
 What belongs here: this README, `install.sh`, the hand-off test and, later, Urbe Lab
 material (printer settings, example projects).
