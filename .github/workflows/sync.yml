@@ -61,7 +61,7 @@ jobs:
         id: tests
         if: steps.sync.outputs.changed == 'true'
         run: |
-          python3 -m pip install --only-binary=:all: -r skills/3d-print-design/requirements.txt
+          python3 -m pip install "--only-binary=:all:" -r skills/3d-print-design/requirements.txt
           (cd skills/3d-print-design && python3 -m unittest discover -s tests -q)
           (cd skills/x2d-print && python3 -m unittest discover -s tests -q)
           python3 -m unittest discover -s tests -v

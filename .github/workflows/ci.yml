@@ -28,7 +28,7 @@ jobs:
       - name: skills/ equals the upstream skill repos (edit skills there, not here)
         run: python3 scripts/sync_skills.py --check
       - name: Install the design skill's geometry libraries
-        run: python3 -m pip install --only-binary=:all: -r skills/3d-print-design/requirements.txt
+        run: python3 -m pip install "--only-binary=:all:" -r skills/3d-print-design/requirements.txt
       - name: 3d-print-design tests
         working-directory: skills/3d-print-design
         run: python3 -m unittest discover -s tests -q
