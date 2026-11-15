@@ -5,6 +5,9 @@ The skills are developed in their own repositories; this kit only carries copies
     python3 scripts/sync_skills.py            # copy the latest main of both, update skills/SOURCES.json
     python3 scripts/sync_skills.py --check    # skills/ must equal the commits in SOURCES.json
     python3 scripts/sync_skills.py --pinned   # copy the commits already in SOURCES.json (must be on main)
+    python3 scripts/sync_skills.py --only x2d-print            # copy the latest main of one skill only
+    python3 scripts/sync_skills.py --check --not-older-than origin/main
+                                              # also refuse a pin older than the one on that ref
 Only files tracked by git upstream are copied, minus the upstream .github folder.
 --check also refuses: a recorded commit that is not on the upstream main branch, a
 different executable bit, and files committed under skills/ that the upstream repo does
@@ -122,11 +125,22 @@ def main(argv=None) -> int:
     ap.add_argument("--ref", default="main", help="branch or commit to copy (default main)")
     ap.add_argument("--pinned", action="store_true",
                     help="copy the commits recorded in SOURCES.json instead of --ref (each must be on main)")
+    ap.add_argument("--only", choices=sorted(UPSTREAM), help="copy this skill only; the other keeps its pin")
+    ap.add_argument("--not-older-than", metavar="REF",
+                    help="with --check: each pin must be the pin in REF's skills/SOURCES.json or newer")
     a = ap.parse_args(argv)
     sources = json.loads(SOURCES.read_text()) if SOURCES.is_file() else {}
+    base = {}
+    if a.not_older_than:
+        try:
+            base = json.loads(git("show", f"{a.not_older_than}:skills/SOURCES.json", cwd=ROOT))
+        except (subprocess.CalledProcessError, ValueError) as exc:
+            raise SystemExit(f"cannot read skills/SOURCES.json at {a.not_older_than}: {exc}")
     problems, changed = [], []
     with tempfile.TemporaryDirectory() as tmp:
         for name, url in UPSTREAM.items():
+            if a.only and name != a.only:
+                continue
             work = Path(tmp) / name
             dest = SKILLS / name
             if a.check:
@@ -138,6 +152,12 @@ def main(argv=None) -> int:
                 if error:
                     problems.append(f"{name}: {error}")
                     continue
+                before = base.get(name, {}).get("commit")
+                if before and before != commit and subprocess.run(
+                        ["git", "merge-base", "--is-ancestor", before, commit], cwd=work,
+                        capture_output=True).returncode != 0:
+                    problems.append(f"{name}: {commit[:7]} is older than {before[:7]} on {a.not_older_than} "
+                                    "(a pin may only move forward)")
                 problems += [f"{name}: {d}" for d in differences(work, dest)]
                 committed = committed_here(name)
                 if committed is None:

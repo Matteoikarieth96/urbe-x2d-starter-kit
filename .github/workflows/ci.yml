@@ -28,6 +28,13 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: skills/ equals the upstream skill repos (edit skills there, not here)
         run: python3 scripts/sync_skills.py --check
+      - name: On a pull request, the skill pins only move forward
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          git fetch -q --depth 1 origin "refs/heads/$BASE:refs/remotes/origin/$BASE"
+          python3 scripts/sync_skills.py --check --not-older-than "origin/$BASE"
       - name: Install the design skill's geometry libraries
         run: python3 -m pip install "--only-binary=:all:" -r skills/3d-print-design/requirements.txt
       - name: 3d-print-design tests
