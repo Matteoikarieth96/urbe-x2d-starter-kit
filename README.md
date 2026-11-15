@@ -52,13 +52,17 @@ update later: `git pull` in this folder.
 2. Answer a few questions (what it is for, sizes, which filament and colours you have).
    Every term is explained the first time it comes up.
 3. Claude builds the part, checks it (closed solid, flat on the plate, nothing hanging
-   in the air, fits the printer) and shows a table like this:
+   in the air, fits the printer) and shows a table like this one, for the two-colour
+   coaster example (real Bambu Studio slice in the last column):
 
-   | Version | What changes | Filament | Print time |
-   |---|---|---|---|
-   | light | 2 walls, 10% infill | ~17 g PLA | 25 to 35 min |
-   | standard | 3 walls, 15% infill | ~18 g PLA | 25 to 35 min |
-   | strong | 4 walls, 40% infill | ~22 g PLA | 30 to 45 min |
+   | Version | What changes | Filament | Print time | Real slice |
+   |---|---|---|---|---|
+   | light | 2 walls, 10% infill | ~17 g PLA | 30 to 50 min | 39 min, 16.5 g |
+   | standard | 3 walls, 15% infill | ~19 g PLA | 30 to 50 min | 41 min, 17.6 g |
+   | strong | 4 walls, 40% infill | ~23 g PLA | 30 to 55 min | 49 min, 22.1 g |
+
+   About 8 of those minutes are the printer getting ready (heating, levelling), so a
+   small part never takes less than that.
 
    It also suggests bigger savings in the design itself, when there are any (a
    smaller part, colours only on the top layers, the main colour on the other nozzle).
