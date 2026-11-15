@@ -39,7 +39,7 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 > **Installazione**: apri il Terminale e incolla, una riga alla volta:
 >
 > ```
-> git clone https://github.com/Matteoikarieth96/urbe-x2d-starter-kit.git
+> git clone https://github.com/urbe-hub/urbe-x2d-starter-kit.git
 > cd urbe-x2d-starter-kit
 > ./install.sh
 > ```
@@ -72,7 +72,7 @@ Rome with a Bambu Lab X2D, and for anyone else with the same printer.
 ## Install
 
 ```
-git clone https://github.com/Matteoikarieth96/urbe-x2d-starter-kit.git
+git clone https://github.com/urbe-hub/urbe-x2d-starter-kit.git
 cd urbe-x2d-starter-kit
 ./install.sh
 ```

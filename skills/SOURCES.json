@@ -1,10 +1,10 @@
 {
   "3d-print-design": {
     "repo": "https://github.com/Matteoikarieth96/3d-print-design-skill",
-    "commit": "8f7bc738ce1435c33babe6127defaf96123a44be"
+    "commit": "684c7f5089a51029d5fed3fe158945c12de2c9bf"
   },
   "x2d-print": {
     "repo": "https://github.com/Matteoikarieth96/x2d-print-skill",
-    "commit": "e41b0ee7990d2758d7a3d0e709c25946b78a9b39"
+    "commit": "3c450b5729bae044836f7cbbbd82e5baec1cd3c8"
   }
 }
