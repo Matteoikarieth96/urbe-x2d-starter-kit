@@ -1,6 +1,6 @@
 ---
 name: x2d-print
-description: Take one or more STL parts to a ready-to-print Bambu Studio project (.3mf) for the Bambu Lab X2D, with every part on the right colour and nozzle, checked by slicing it locally, plus a step by step guide for a complete beginner (install Bambu Studio, connect computer and printer, sync the AMS colours, slice, send the print, stay for the first layer). Applies multicolour best practices so the print wastes little filament. Use it whenever someone wants to print on a Bambu Lab X2D, prepare a 3MF for Bambu Studio, assign colours or nozzles to STL parts, cut purge waste, or says "voglio stampare questo sulla Bambu", "preparami il 3mf", "come stampo a più colori", "è la prima volta che stampo", "print this on my X2D", even without saying "skill". Not for other printer brands, designing a part from scratch (use a CAD or design skill first), or starting a print remotely.
+description: Turn STL parts into a ready-to-print Bambu Studio project (.3mf) for the Bambu Lab X2D, colours and nozzles assigned, plus a beginner's guide. Use when someone wants to print on an X2D or prepare a 3MF, or says "voglio stampare questo sulla Bambu", "preparami il 3mf", "come stampo a più colori", "è la prima volta che stampo". Not for designing a part (3d-print-design) or other printer brands.
 ---
 
 # x2d-print
